@@ -21,7 +21,6 @@ Este software permite analizar, conciliar y visualizar extractos bancarios en PD
 **Table of Contents**
 
 [TOCM]
-
 [TOC]
 
 ## 🖼️ Vista previa de la aplicación
