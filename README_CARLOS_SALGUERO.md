@@ -17,6 +17,7 @@ Este software permite analizar, conciliar y visualizar extractos bancarios en PD
 - 📦 Empaquetado como `.exe` listo para Windows
 
 ---
+# Editor.md
 **Table of Contents**
 
 [TOCM]
