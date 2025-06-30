@@ -30,6 +30,9 @@ Este software permite analizar, conciliar y visualizar extractos bancarios en PD
 ![Selección](imagen_app/Moneda.png)
 ![Selección](imagen_app/Año.png)
 
+### 🔹 Ventana principal final
+![Ventana principal final](imagen_app/conciliacion_final.png)
+
 ### 🔹 Visualización de gráficas
 ![Gráfica](imagen_app/graficas.png)
 
