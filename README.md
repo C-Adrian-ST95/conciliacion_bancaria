@@ -1,20 +1,28 @@
 
-# 🏦 Conciliador Bancario Automatizado con Interfaz Gráfica
+# 🏦 Conciliador Bancario Automatizado con Interfaz Gráfica - Versión Avanzada
 
 Este software permite analizar, conciliar y visualizar extractos bancarios en PDF comparándolos con registros contables en Excel. Ofrece una interfaz amigable, análisis automático de datos, filtrado por moneda y año, y generación de gráficos personalizados.
+
+**🆕 VERSIÓN AVANZADA**: Esta versión incluye validación exhaustiva, manejo robusto de errores, documentación completa, análisis detallado de datos y retroalimentación visual mejorada.
 
 ---
 
 ## 📌 Características Principales
 
-- 🧾 Lectura automática de extractos bancarios en **PDF** (`pdfplumber`)
-- 📊 Limpieza, tipado y procesamiento de datos contables en **Excel** (`pandas`)
+- 🧾 Lectura automática de extractos bancarios en **PDF** (`pdfplumber`) con validación avanzada
+- 📊 Limpieza, tipado y procesamiento de datos contables en **Excel** (`pandas`) con análisis de calidad
 - 🕵️‍ Comparación automática entre PDF y Excel con filtrado por moneda y año
-- 📉 Detección de errores de saldo, montos duplicados, y cambios anómalos
-- 📈 Visualización de resultados en tabla y gráficos
-- 📤 Exportación de resultados a Excel (.xlsx)
-- 🧩 Interfaz gráfica amigable con `Tkinter`
+- 📉 Detección de errores de saldo, montos duplicados, y cambios anómalos con reportes detallados
+- 📈 Visualización de resultados en tabla y gráficos con información estadística
+- 📤 Exportación de resultados a Excel (.xlsx) con metadatos y múltiples hojas
+- 🧩 Interfaz gráfica amigable con `Tkinter` y retroalimentación visual
 - 📦 Empaquetado como `.exe` listo para Windows
+- 🔍 **NUEVO**: Validación exhaustiva de archivos antes del procesamiento
+- 💡 **NUEVO**: Manejo robusto de errores con sugerencias específicas
+- 📋 **NUEVO**: Documentación completa integrada en la aplicación
+- 📊 **NUEVO**: Análisis estadístico detallado de resultados
+- ⚡ **NUEVO**: Indicadores de progreso durante procesamiento
+- 🛠️ **NUEVO**: Sistema de ayuda completo con solución de problemas
 
 ---
 

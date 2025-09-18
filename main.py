@@ -1,5 +1,5 @@
 import tkinter as tk
-from gui.componentes import cargar_excel, cargar_pdf, seleccionar_y_procesar, exportar_actual
+from gui.componentes import cargar_excel, cargar_pdf, seleccionar_y_procesar, exportar_actual, mostrar_ayuda
 from gui.graficos import graficar_dataframe_seleccionado
 from gui.ventana import frame_botones, ventana
 
@@ -22,6 +22,11 @@ btn_exportar.pack(side="left", padx=10)
 
 btn_grafica = tk.Button(frame_botones, text="Mostrar Gráfica", command=graficar_dataframe_seleccionado)# Mostrar gráfica de los datos procesados    
 btn_grafica.pack(side="left", padx=5)
+
+# Agregar botón de ayuda con diseño destacado
+btn_ayuda = tk.Button(frame_botones, text="❓ Ayuda", command=mostrar_ayuda, 
+                     bg="#2196F3", fg="white", font=("Arial", 9, "bold"))# Mostrar ayuda completa
+btn_ayuda.pack(side="right", padx=10)
 
 
 

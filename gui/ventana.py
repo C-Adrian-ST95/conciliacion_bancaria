@@ -11,7 +11,7 @@ def resource_path(relative_path):
 
 
 ventana = tk.Tk() # Crear la ventana principal de la aplicación 
-ventana.title("Conciliación Bancario (Excel y PDF) - Multiarchivo")  # Título de la ventana
+ventana.title("Conciliación Bancario (Excel y PDF) - Versión Avanzada con Análisis Detallado")  # Título de la ventana
 ventana.geometry("1200x700") # Tamaño de la ventana 
 
 
@@ -20,7 +20,7 @@ ventana.iconbitmap(resource_path("gui/icono_ventana_principal.ico"))
 icono = tk.PhotoImage(file=resource_path("accounting.png"))
 ventana.iconphoto(True, icono) 
 
-pie_label = tk.Label(ventana, text="C.A.S.T", font=("Arial", 9), fg="gray") # Crear un label para el pie de página  
+pie_label = tk.Label(ventana, text="C.A.S.T - Versión Avanzada v1.0 - Con análisis detallado y documentación completa", font=("Arial", 9), fg="gray") # Crear un label para el pie de página  
 pie_label.pack(side="bottom", pady=3)  # Coloca el label en la parte inferior
 
 
