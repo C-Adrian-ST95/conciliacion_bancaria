@@ -21,16 +21,20 @@ Este software permite analizar, conciliar y visualizar extractos bancarios en PD
 ## 🖼️ Vista previa de la aplicación
 
 ### 🔹 Ventana principal
-![Ventana principal](docs/ventana_principal.png)
+![Ventana principal](imagen_app/Captura de pantalla 2025-06-29 195255.png.png)
 
 ### 🔹 Carga de archivos y botones
-![Botones de carga](docs/botones_carga.png)
+![Botones de carga](imagen_app/botones_carga.png)
 
 ### 🔹 Selección de moneda y año
-![Selección](docs/seleccionadores.png)
+![Selección](imagen_app/Moneda.png)
+![Selección](imagen_app/Año.png)
+
+### 🔹 Ventana principal final
+![Ventana principal final](imagen_app/conciliacion_final.png)
 
 ### 🔹 Visualización de gráficas
-![Gráfica](docs/grafica_cargos_abonos.png)
+![Gráfica](imagen_app/graficas.png)
 
 ---
 
