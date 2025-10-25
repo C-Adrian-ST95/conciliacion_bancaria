@@ -51,9 +51,9 @@ def abrir_ventana_grafica(df_cargo,df_abono, col_fecha, col_cargo, col_abono):
     # Crear la figura y el eje
     fig, axs = plt.subplots(1, 2, figsize=(12, 6)) # Crear una figura con dos subgráficos (uno para cargos y otro para abonos)
 
-# Primer gráfico: Cargos
-    bars = axs[0].barh(df_cargo[col_fecha], df_cargo[col_cargo]) # Gráfico de barras horizontales para cargos       
-    axs[0].set_title('Cargos vs Fecha') # Título del gráfico de cargos
+# Primer gráfico: Haber
+    bars = axs[0].barh(df_cargo[col_fecha], df_cargo[col_cargo]) # Gráfico de barras horizontales para haber       
+    axs[0].set_title('Haber vs Fecha') # Título del gráfico de haber
     axs[0].set_xlabel('') # Etiqueta del eje X
     axs[0].set_ylabel('') # Etiqueta del eje Y  
     axs[0].spines['top'].set_visible(False) # Ocultar el borde superior del gráfico
@@ -72,9 +72,9 @@ def abrir_ventana_grafica(df_cargo,df_abono, col_fecha, col_cargo, col_abono):
         axs[0].text(width , y_pos , f'{width:.2f}',
                     ha='left', va='center', fontsize=7, rotation=0, color='black') # texto del valor de la barra    
     
-    # Segundo gráfico: Abonos
+    # Segundo gráfico: Debe
     bara = axs[1].barh(df_abono[col_fecha], df_abono[col_abono], color='orange') # Gráfico de barras horizontales para abonos
-    axs[1].set_title('Abonos vs Fecha') # Título del gráfico de abonos
+    axs[1].set_title('Debe vs Fecha') # Título del gráfico de abonos
     axs[1].set_xlabel('') # Etiqueta del eje X 
     axs[1].set_ylabel('', fontsize=5) # Etiqueta del eje Y
     axs[1].spines['top'].set_visible(False) # Ocultar el borde superior del gráfico
@@ -142,14 +142,14 @@ def graficar_dataframe_seleccionado():
 
     nombre = listbox.get(seleccion[0]) # Obtener el nombre del archivo seleccionado     
     df = archivos_cargados[nombre] # Obtener el DataFrame correspondiente al archivo seleccionado               
-    df_cargo = df.groupby('Fecha')['Cargo'].sum().reset_index()
-    df_cargo = df_cargo.query('Cargo > 0') # Agrupar de 'Cargo' por fecha y filtrar los que son mayores a 
+    df_cargo = df.groupby('Fecha')['Haber'].sum().reset_index()
+    df_cargo = df_cargo.query('Haber > 0') # Agrupar de 'Haber' por fecha y filtrar los que son mayores a 0
 
-    df_abono = df.groupby('Fecha')['Abono'].sum().reset_index()
-    df_abono = df_abono.query('Abono > 0') # Agrupar de 'Abono' por fecha y filtrar los que son mayores a 0
-    if 'Cargo' not in df.columns or 'Fecha' not in df.columns:
-        messagebox.showerror("Error", "El DataFrame no tiene las columnas necesarias para graficar ('Fecha', 'Cargo','Abono').")
+    df_abono = df.groupby('Fecha')['Debe'].sum().reset_index()
+    df_abono = df_abono.query('Debe > 0') # Agrupar de 'Debe' por fecha y filtrar los que son mayores a 0
+    if 'Haber' not in df.columns or 'Fecha' not in df.columns:
+        messagebox.showerror("Error", "El DataFrame no tiene las columnas necesarias para graficar ('Fecha', 'Haber','Debe').")
         return
 
-    abrir_ventana_grafica(df_cargo,df_abono, 'Fecha', 'Cargo','Abono')
+    abrir_ventana_grafica(df_cargo,df_abono, 'Fecha', 'Haber','Debe')
 

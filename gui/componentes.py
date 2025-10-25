@@ -8,7 +8,19 @@ from tkinter import filedialog, messagebox, ttk, simpledialog
 from core.utilidades import archivos_cargados
 from core.excel_loader import data_base 
 from core.comparador import procesar_extracto_bancario 
-from gui.ventana import listbox, frame_tabla,ventana
+from gui.ventana import listbox, frame_tabla,ventana,frame_busqueda, frame_estadisticas
+import math
+import logging
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('conciliacion.log'),
+        logging.StreamHandler()
+    ]
+)
 
 # Función para mostrar un DataFrame en una tabla dentro de la interfaz gráfica
 def mostrar_tabla(df):
@@ -28,21 +40,29 @@ def mostrar_tabla(df):
     """
     # Verificar si el DataFrame está vacío antes de intentar mostrarlo          
     if df.empty:
-        messagebox.showinfo("Información", "El DataFrame está vacío. No hay datos para mostrar.")
+        messagebox.showinfo("Información", "El DataFrame está vacío")
         return
+    
+    # Mostrar estadísticas
+    mostrar_estadisticas(df)
+    
     for widget in frame_tabla.winfo_children(): # Limpiar la tabla antes de mostrar un nuevo DataFrame  
         widget.destroy() # Limpiar los widgets existentes en el frame_tabla 
 
     columnas = list(df.columns)  # Obtener las columnas del DataFrame para mostrarlas en la tabla   
 
-    scrollbar_y = tk.Scrollbar(frame_tabla, orient="vertical") # Crear una barra de desplazamiento vertical 
-    scrollbar_y.pack(side="right", fill="y")   # Añadir la barra de desplazamiento vertical al frame_tabla    
-    scrollbar_x = tk.Scrollbar(frame_tabla, orient="horizontal")#Crear una barra de desplazamiento horizontal      
-    scrollbar_x.pack(side="bottom", fill="x") # Añadir la barra de desplazamiento horizontal al frame_tabla 
+    scrollbar_y = ttk.Scrollbar(frame_tabla, orient="vertical") # Crear una barra de desplazamiento vertical 
+    scrollbar_y.pack(side="right", fill="y")   # Añadir la barra de desplazamiento vertical al frame_tabla
+    scrollbar_x = ttk.Scrollbar(frame_tabla, orient="horizontal")#Crear una barra de desplazamiento horizontal
+    scrollbar_x.pack(side="bottom", fill="x") # Añadir la barra de desplazamiento horizontal al frame_tabla
+
+    # 4) Crear Treeview
+    columnas_df = [str(c) for c in list(df.columns)]
+    columnas = ["N°"] + columnas_df
 
     tabla = ttk.Treeview(
         frame_tabla,
-        columns=["Número de fila"] + list(df.columns),
+        columns=columnas,
         show='headings', 
         yscrollcommand=scrollbar_y.set,
         xscrollcommand=scrollbar_x.set
@@ -52,33 +72,73 @@ def mostrar_tabla(df):
     scrollbar_y.config(command=tabla.yview) # Configurar la barra de desplazamiento vertical para controlar el Treeview
     scrollbar_x.config(command=tabla.xview) 
 
-    tabla.heading("Número de fila", text="N°")
-    tabla.column("Número de fila", width=30, anchor="center")
+    tabla.heading("N°", text="N°")
+    tabla.column("N°", width=50, anchor="center", stretch=False)
 
-    for col in columnas: # Configurar las columnas del Treeview con los nombres del DataFrame
-        tabla.heading(col, text=col) # Establecer el encabezado de cada columna 
-        tabla.column(col, width=100, anchor="center") # Establecer el ancho de cada columna  
+    def ancho_sugerido(serie, minimo=80, maximo=300, padding=20):
+            try:
+                maxlen = serie.astype(str).map(len).max()
+                return max(minimo, min(maximo, maxlen + padding))
+            except Exception:
+                return minimo
+    
+    for col in columnas_df:
+            tabla.heading(col, text=col)
+            # Ancho heurístico por contenido
+            try:
+                w = ancho_sugerido(df[col])
+            except Exception:
+                w = 100
+            tabla.column(col, width=w, anchor="center")
+    
+        # 7) Insertar filas (reemplazar NaN por vacío para no mostrar 'nan')
+    def clean_value(v):
+            try:
+                if isinstance(v, float) and math.isnan(v):
+                    return ""
+            except Exception:
+                pass
+            return v
+    
+    for i, row in enumerate(df.itertuples(index=False, name=None), start=1):
+            valores = [i] + [clean_value(v) for v in row]
+            tabla.insert("", "end", values=valores)
+    
+        # 8) (Opcional) Zebra striping para legibilidad
+    try:
+            tabla.tag_configure("evenrow", background="#f5f5f5")
+            for idx, item in enumerate(tabla.get_children("")):
+                tag = "evenrow" if idx % 2 == 0 else ""
+                tabla.item(item, tags=(tag,))
+    except Exception:
+            pass
 
-    for i, row in enumerate(df.itertuples(index=False), start=1):  # Enumerar desde 1
-        tabla.insert("", "end", values=[i] + list(row))
-    # Agregar la tabla al frame
-    tabla.pack(fill="both", expand=True)
 
-def mostrar_archivo_seleccionado(): # Mostrar el DataFrame del archivo seleccionado en el Listbox
+def mostrar_archivo_seleccionado(event=None): # Mostrar el DataFrame del archivo seleccionado en el Listbox
     """
     Función para mostrar el DataFrame correspondiente al archivo seleccionado en el Listbox.
-    Recupera el nombre del archivo seleccionado, accede al DataFrame desde `archivos_cargados`
-    y lo muestra utilizando `mostrar_tabla()`.
+    Se puede llamar directamente o a través del evento de selección del Listbox.
+
+    Parámetros:
+    ----------
+    event : Event, opcional
+        Evento de selección del Listbox (por defecto None)
 
     Retorna: None
     """
-    seleccion = listbox.curselection() # Obtener la selección actual del Listbox    
-    if seleccion: # Si hay una selección válida 
-        nombre = listbox.get(seleccion[0]) # Obtener el nombre del archivo seleccionado 
-        df = archivos_cargados[nombre] # Obtener el DataFrame correspondiente al nombre del archivo seleccionado    
-        mostrar_tabla(df) 
+    try:
+        seleccion = listbox.curselection() # Obtener la selección actual del Listbox    
+        if seleccion: # Si hay una selección válida 
+            nombre = listbox.get(seleccion[0]) # Obtener el nombre del archivo seleccionado 
+            df = archivos_cargados.get(nombre)
+            if df is not None:
+                mostrar_tabla(df)
+            else:
+                messagebox.showwarning("Advertencia", f"No se encontró el DataFrame para: {nombre}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Error mostrando el archivo seleccionado:\n{e}")
 
-    
+
 def actualizar_lista_archivos(): # Actualizar la lista de archivos cargados en el Listbox
     """
     Función para actualizar el Listbox con los nombres de los archivos actualmente cargados.
@@ -117,7 +177,9 @@ def cargar_pdf(): # Cargar un archivo PDF y procesarlo para extraer datos
             listbox.selection_clear(0, tk.END) # Limpiar la selección actual del Listbox    
             listbox.selection_set(tk.END) # Seleccionar el último archivo cargado en el Listbox 
             mostrar_tabla(df) # Mostrar el DataFrame en la tabla
+            logging.info(f"PDF cargado exitosamente: {nombre}")
         except Exception as e: # Manejar cualquier excepción que ocurra durante el procesamiento del PDF
+            logging.error(f"Error al cargar {archivo}: {str(e)}")
             messagebox.showerror("Error", f"No se pudo procesar el PDF:\n{str(e)}")
 
 def cargar_excel(): # Cargar un archivo Excel y procesarlo para extraer datos
@@ -145,6 +207,7 @@ def cargar_excel(): # Cargar un archivo Excel y procesarlo para extraer datos
             listbox.selection_set(tk.END)       # Seleccionar el último archivo cargado en el Listbox       
             mostrar_tabla(df) # Mostrar el DataFrame en la tabla
         except Exception as e: # Manejar cualquier excepción que ocurra durante el procesamiento del Excel          
+            logging.error(f"Error al cargar {archivo}: {str(e)}")
             messagebox.showerror("Error", f"No se pudo procesar el archivo:\n{str(e)}")
 
 # Función para seleccionar archivos PDF y Excel, y procesarlos
@@ -272,7 +335,7 @@ def seleccionar_anio():  # Seleccionar un año para filtrar la columna 'fecha'
     tk.Label(dialog, text="¿Qué año deseas filtrar?").pack(padx=10, pady=10) # Etiqueta para indicar al usuario que seleccione un año
     
     # Crear un Combobox para seleccionar el año
-    combo = ttk.Combobox(dialog, values=[2020, 2021, 2022, 2023, 2024, 2025,2026], state="readonly") # Crear un Combobox para seleccionar el año    
+    combo = ttk.Combobox(dialog, values=[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028], state="readonly") # Crear un Combobox para seleccionar el año    
     combo.set(2026)  # Valor predeterminado
     combo.pack(padx=10, pady=10) # Añadir el Combobox al cuadro de diálogo para seleccionar el año
     
@@ -291,5 +354,145 @@ def seleccionar_anio():  # Seleccionar un año para filtrar la columna 'fecha'
     ventana.wait_window(dialog) # Esperar a que se cierre el cuadro de diálogo antes de continuar con la ejecución del programa
     return seleccion["anio"] # Retornar el año seleccionado por el usuario
 
-listbox.pack(fill="y", expand=True) # Añadir el Listbox al frame_lista para mostrar los archivos cargados   
-listbox.bind('<<ListboxSelect>>', mostrar_archivo_seleccionado)   # Asociar el evento de selección del Listbox con la función para mostrar el DataFrame correspondiente       
+# Asegúrate que estas líneas estén al final del archivo:
+#listbox.pack(fill="y", expand=True) # Empaquetar el Listbox en la ventana principal
+listbox.bind('<<ListboxSelect>>', mostrar_archivo_seleccionado) # Vincular el evento de selección del Listbox a la función mostrar_archivo_seleccionado 
+
+
+def agregar_buscador():
+    """
+    Agrega un campo de búsqueda que permite filtrar los datos en la tabla.
+    La búsqueda se realiza en tiempo real mientras el usuario escribe.
+    """
+    # Limpiar el frame de búsqueda antes de agregar nuevos elementos
+    for widget in frame_busqueda.winfo_children():
+        widget.destroy()
+    
+    # Agregar etiqueta
+    tk.Label(frame_busqueda, text="Buscar:").pack(side="left", padx=(5,2))
+    
+    entry_buscar = tk.Entry(frame_busqueda)
+    entry_buscar.pack(side="left", fill="x", expand=True, padx=5)
+    
+    def filtrar_datos(*args):
+        # Obtener DataFrame actual
+        seleccion = listbox.curselection()
+        if not seleccion:
+            return
+            
+        nombre = listbox.get(seleccion[0])
+        df_original = archivos_cargados.get(nombre)
+        
+        if df_original is None:
+            return
+            
+        texto = entry_buscar.get().lower().strip()
+        
+        if not texto:
+            # Si no hay texto, mostrar todos los datos
+            mostrar_tabla(df_original)
+            return
+            
+        # Filtrar DataFrame
+        try:
+            mascara = df_original.astype(str).apply(
+                lambda x: x.str.lower().str.contains(texto, na=False)
+            ).any(axis=1)
+            df_filtrado = df_original[mascara]
+            mostrar_tabla(df_filtrado)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al filtrar datos: {e}")
+    
+    # Vincular eventos
+    entry_buscar.bind('<KeyRelease>', filtrar_datos)
+    
+    # Botón de búsqueda
+    btn_buscar = tk.Button(frame_busqueda, text="🔍", command=filtrar_datos)
+    btn_buscar.pack(side="left")
+    
+    # Botón para limpiar búsqueda
+    def limpiar_busqueda():
+        entry_buscar.delete(0, tk.END)
+        filtrar_datos()
+        
+    btn_limpiar = tk.Button(frame_busqueda, text="✖", command=limpiar_busqueda)
+    btn_limpiar.pack(side="left", padx=(2,5))
+
+def mostrar_estadisticas(df):
+    """
+    Muestra estadísticas básicas del DataFrame seleccionado.
+    
+    Parámetros:
+    ----------
+    df : pandas.DataFrame
+        DataFrame del cual se mostrarán las estadísticas
+    
+    Retorna:
+    -------
+    None
+    """
+    # Limpiar el frame de estadísticas antes de agregar nuevos elementos
+    for widget in frame_estadisticas.winfo_children():
+        widget.destroy()
+    
+    if df is None or df.empty:
+        tk.Label(frame_estadisticas, text="No hay datos para mostrar", 
+                font=("Arial", 10), fg="gray").pack(pady=5)
+        return
+    
+    # Obtener estadísticas
+    num_filas = len(df)
+    num_columnas = len(df.columns)
+    sum_haber = sum(df['Haber']) if 'Haber' in df.columns else 0
+    sum_debe = sum(df['Debe']) if 'Debe' in df.columns else 0
+
+    # Crear frame contenedor para las estadísticas
+    stats_container = tk.Frame(frame_estadisticas, relief="ridge", borderwidth=2)
+    stats_container.pack(fill="x", padx=3, pady=3)
+    
+    # Título
+    tk.Label(stats_container, text="📊 Estadísticas del Archivo", 
+            font=("Arial", 10, "bold"), fg="#2c3e50").pack(pady=(3,2))
+    
+    # Separador
+    ttk.Separator(stats_container, orient="horizontal").pack(fill="x", padx=8, pady=5)
+    
+    # Frame para las métricas
+    metrics_frame = tk.Frame(stats_container)
+    metrics_frame.pack(fill="x", padx=7, pady=5)
+    
+    # Filas
+    fila_frame = tk.Frame(metrics_frame)
+    fila_frame.pack(side="left", expand=True, fill="x", padx=5)
+    tk.Label(fila_frame, text="Filas:", font=("Arial", 9)).pack(anchor="w")
+    tk.Label(fila_frame, text=f"{num_filas:,}", 
+            font=("Arial", 11, "bold"), fg="#27ae60").pack(anchor="w")
+    
+    # Columnas
+    tk.Label(fila_frame, text="Columnas:", font=("Arial", 9)).pack(anchor="w")
+    tk.Label(fila_frame, text=f"{num_columnas}", 
+            font=("Arial", 11, "bold"), fg="#3498db").pack(anchor="w")
+
+    # Total de debe
+    total_frame = tk.Frame(metrics_frame)
+    total_frame.pack(side="left", expand=True, fill="x", padx=5)
+    tk.Label(total_frame, text="Total Debe:", font=("Arial", 9)).pack(anchor="w")
+    tk.Label(total_frame, text=f"{sum_debe:,}", 
+            font=("Arial", 11, "bold"), fg="#e74c3c").pack(anchor="w")
+
+    # Total Haber
+    tk.Label(total_frame, text="Total Haber:", font=("Arial", 9)).pack(anchor="w")
+    tk.Label(total_frame, text=f"{sum_haber:,}", 
+            font=("Arial", 11, "bold"), fg="#e74c3c").pack(anchor="w")
+    
+    # Total diferencia
+    tk.Label(total_frame, text="Total Diferencia:", font=("Arial", 9)).pack(anchor="w")
+    if sum_debe - sum_haber < 0:
+        tk.Label(total_frame, text=f"{sum_debe - sum_haber:.3f}", 
+                font=("Arial", 11, "bold"), fg="#e74c3c").pack(anchor="w")
+    else:
+        tk.Label(total_frame, text=f"{sum_debe - sum_haber:.3f}", 
+                font=("Arial", 11, "bold"), fg="#27ae60").pack(anchor="w")
+
+    # Espacio final
+    tk.Label(stats_container, text="", font=("Arial", 1)).pack(pady=2)
